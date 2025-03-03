@@ -37,7 +37,7 @@ jobs:
         run: |
           if [ ! -d "content" ]; then
             mkdir -p content/posts content/about archetypes static themes layouts
-            echo '---
+            echo '---'
 title: "{{ replace .Name "-" " " | title }}"
 date: {{ .Date }}
 draft: false
