@@ -1,0 +1,17 @@
+{
+  "name": "ai-blog-api",
+  "version": "1.0.0",
+  "description": "API for generating blog content",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@anthropic-ai/sdk": "^0.12.0",
+    "@octokit/rest": "^19.0.13",
+    "dotenv": "^16.3.1"
+  }
+}
+EOF

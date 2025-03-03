@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        textarea {
+            height: 150px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Blog Content Generator</h1>
+    
+    <form id="configForm" style="margin-bottom: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
+        <h3>API Configuration</h3>
+        <div class="form-group">
+            <label for="githubToken">GitHub Token:</label>
+            <input type="password" id="githubToken" placeholder="Your GitHub Personal Access Token">
+        </div>
+        <div class="form-group">
+            <label for="claudeApiKey">Claude API Key:</label>
+            <input type="password" id="claudeApiKey" placeholder="Your Claude API Key">
+        </div>
+        <div class="form-group">
+            <label for="githubUsername">GitHub Username:</label>
+            <input type="text" id="githubUsername" placeholder="Your GitHub Username">
+        </div>
+        <div class="form-group">
+            <label for="githubRepo">GitHub Repository:</label>
+            <input type="text" id="githubRepo" placeholder="Your Repository Name">
+        </div>
+        <button type="submit">Save Configuration</button>
+    </form>
+    
+    <form id="contentForm">
+        <h3>Generate Content</h3>
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="topic">Topic or Prompt:</label>
+            <textarea id="topic" name="topic" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>AI Model:</label>
+            <div>
+                <label>
+                    <input type="radio" name="model" value="claude" checked> Claude
+                </label>
+                <label>
+                    <input type="radio" name="model" value="grok"> Grok
+                </label>
+                <label>
+                    <input type="radio" name="model" value="both"> Both
+                </label>
+            </div>
+        </div>
+        
+        <button type="submit">Generate & Publish</button>
+    </form>
+    
+    <div id="status" class="status" style="display: none;"></div>
+    
+    <script>
+        // Store API keys in session storage (cleared when browser is closed)
+        document.getElementById('configForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const githubToken = document.getElementById('githubToken').value;
+            const claudeApiKey = document.getElementById('claudeApiKey').value;
+            const githubUsername = document.getElementById('githubUsername').value;
+            const githubRepo = document.getElementById('githubRepo').value;
+            
+            if (githubToken) sessionStorage.setItem('githubToken', githubToken);
+            if (claudeApiKey) sessionStorage.setItem('claudeApiKey', claudeApiKey);
+            if (githubUsername) sessionStorage.setItem('githubUsername', githubUsername);
+            if (githubRepo) sessionStorage.setItem('githubRepo', githubRepo);
+            
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'Configuration saved!';
+            statusEl.className = 'status success';
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        });
+        
+        // Load saved values
+        window.addEventListener('load', () => {
+            const githubUsername = sessionStorage.getItem('githubUsername');
+            const githubRepo = sessionStorage.getItem('githubRepo');
+            
+            if (githubUsername) document.getElementById('githubUsername').value = githubUsername;
+            if (githubRepo) document.getElementById('githubRepo').value = githubRepo;
+        });
+        
+        document.getElementById('contentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const statusEl = document.getElementById('status');
+            statusEl.style.display = 'none';
+            statusEl.className = 'status';
+            
+            // Check if config is set
+            const githubToken = sessionStorage.getItem('githubToken');
+            const claudeApiKey = sessionStorage.getItem('claudeApiKey');
+            const githubUsername = sessionStorage.getItem('githubUsername');
+            const githubRepo = sessionStorage.getItem('githubRepo');
+            
+            if (!githubToken || !claudeApiKey || !githubUsername || !githubRepo) {
+                statusEl.textContent = 'Please configure your API keys first';
+                statusEl.className = 'status error';
+                statusEl.style.display = 'block';
+                return;
+            }
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                topic: document.getElementById('topic').value,
+                model: document.querySelector('input[name="model"]:checked').value,
+                githubToken,
+                claudeApiKey,
+                githubUsername,
+                githubRepo
+            };
+            
+            try {
+                statusEl.textContent = 'Generating content...';
+                statusEl.style.display = 'block';
+                
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusEl.textContent = `Content published successfully! View at: ${data.url}`;
+                    statusEl.className = 'status success';
+                    document.getElementById('contentForm').reset();
+                } else {
+                    statusEl.textContent = `Error: ${data.error}`;
+                    statusEl.className = 'status error';
+                }
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        });
+    </script>
+</body>
+</html>
+
