@@ -37,7 +37,7 @@ jobs:
         run: |
           if [ ! -d "content" ]; then
             mkdir -p content/posts content/about archetypes static themes layouts
-            
+            echo '---
 title: "{{ replace .Name "-" " " | title }}"
 date: {{ .Date }}
 draft: false
@@ -55,8 +55,8 @@ categories: []
       - name: Check for config file
         run: |
           if [ ! -f "config.toml" ]; then
-            cat > config.toml << 'EOF'
-baseURL = "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+            cat > config.toml << EOF
+baseURL = "https://\${{ github.repository_owner }}.github.io/\${{ github.event.repository.name }}/"
 languageCode = "en-us"
 title = "AI-Generated Blog"
 theme = "PaperMod"
@@ -66,7 +66,7 @@ theme = "PaperMod"
   
 [params]
   description = "A blog featuring AI-generated content"
-  author = "${{ github.repository_owner }}"
+  author = "\${{ github.repository_owner }}"
   
   [params.homeInfoParams]
     Title = "AI-Generated Content"
@@ -74,7 +74,7 @@ theme = "PaperMod"
   
   [[params.socialIcons]]
     name = "github"
-    url = "https://github.com/${{ github.repository_owner }}"
+    url = "https://github.com/\${{ github.repository_owner }}"
     
   [taxonomies]
     category = "categories"
@@ -85,7 +85,7 @@ EOF
       - name: Create sample post if none exists
         run: |
           if [ ! "$(ls -A content/posts 2>/dev/null)" ]; then
-            cat > content/posts/welcome.md << 'EOF'
+            cat > content/posts/welcome.md << EOF
 ---
 title: "Welcome to My AI Blog"
 date: $(date +%Y-%m-%d)
